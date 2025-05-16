@@ -123,7 +123,29 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
-  password: 'password'
+  password: 'password',
+  role: 'role',
+  createdAt: 'createdAt',
+  name: 'name',
+  parkingDate: 'parkingDate',
+  parkingSlot: 'parkingSlot',
+  phone: 'phone',
+  plateNumber: 'plateNumber',
+  status: 'status',
+  otp: 'otp',
+  otpExpiresAt: 'otpExpiresAt'
+};
+
+exports.Prisma.BookingScalarFieldEnum = {
+  id: 'id',
+  fullName: 'fullName',
+  email: 'email',
+  phone: 'phone',
+  plateNumber: 'plateNumber',
+  bookingDate: 'bookingDate',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  status: 'status'
 };
 
 exports.Prisma.SortOrder = {
@@ -136,9 +158,15 @@ exports.Prisma.QueryMode = {
   insensitive: 'insensitive'
 };
 
+exports.Prisma.NullsOrder = {
+  first: 'first',
+  last: 'last'
+};
+
 
 exports.Prisma.ModelName = {
-  User: 'User'
+  User: 'User',
+  Booking: 'Booking'
 };
 
 /**

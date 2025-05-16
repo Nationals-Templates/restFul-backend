@@ -15,7 +15,26 @@ datasource db {
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
-  password String
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  password    String
+  name        String?
+  phone       String?
+  plateNumber String?
+  parkingDate DateTime @default(now())
+  status      String   @default("pending")
+  parkingSlot String?
+  createdAt   DateTime @default(now())
+}
+
+model Booking {
+  id          Int      @id @default(autoincrement())
+  fullName    String
+  email       String
+  phone       String
+  plateNumber String
+  bookingDate DateTime
+  userId      Int
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
 }

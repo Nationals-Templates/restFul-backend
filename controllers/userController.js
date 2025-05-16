@@ -1,47 +1,111 @@
 const prisma = require('../utils/db');
 
+const safeUserFields = {
+  id: true,
+  name: true,
+  email: true,
+  phone: true,
+  status: true,
+  createdAt: true,
+  password: false,
+  role: false
+};
+
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await prisma.user.findMany();
+    const users = await prisma.user.findMany({
+      where: {
+        role: { not: 'admin' } // Exclude admin users
+      },
+      select: safeUserFields,
+      orderBy: { createdAt: 'desc' }
+    });
     return res.status(200).json(users);
   } catch (error) {
-    console.log(error);
-    
-    return res.status(500).json({ error: 'Error fetching users' });
+    console.error('Error fetching users:', error);
+    return res.status(500).json({ 
+      error: 'Failed to fetch users',
+      details: process.env.NODE_ENV === 'development' ? error.message : null
+    });
   }
 };
 
 exports.getUserById = async (req, res) => {
   const { id } = req.params;
+  const requestingUserId = req.user.id;
+  const requestingUserRole = req.user.role;
+
   try {
-    const user = await prisma.user.findUnique({ where: { id: parseInt(id) } });
+    if (parseInt(id) !== requestingUserId && requestingUserRole !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized access' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(id) },
+      select: requestingUserRole === 'admin' 
+        ? { ...safeUserFields, role: true }
+        : safeUserFields
+    });
+
     if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json(user);
+    return res.json(user);
   } catch (error) {
-    res.status(500).json({ error: 'Error fetching user' });
+    console.error('Error fetching user:', error);
+    return res.status(500).json({ 
+      error: 'Error fetching user',
+      details: process.env.NODE_ENV === 'development' ? error.message : null
+    });
   }
 };
 
 exports.updateUser = async (req, res) => {
   const { id } = req.params;
-  const { email, name } = req.body;
+  const requestingUserId = req.user.id;
+  const requestingUserRole = req.user.role;
+  const updateData = req.body;
+
   try {
-    const user = await prisma.user.update({
+    if (parseInt(id) !== requestingUserId && requestingUserRole !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized update attempt' });
+    }
+
+    if (updateData.role && requestingUserRole !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can change roles' });
+    }
+
+    const updatedUser = await prisma.user.update({
       where: { id: parseInt(id) },
-      data: { email, name },
+      data: updateData,
+      select: safeUserFields
     });
-    res.json(user);
+
+    return res.json(updatedUser);
   } catch (error) {
-    res.status(500).json({ error: 'Error updating user' });
+    console.error('Error updating user:', error);
+    return res.status(500).json({ 
+      error: 'Error updating user',
+      details: process.env.NODE_ENV === 'development' ? error.message : null
+    });
   }
 };
 
 exports.deleteUser = async (req, res) => {
   const { id } = req.params;
   try {
-    await prisma.user.delete({ where: { id: parseInt(id) } });
-    res.json({ message: 'User deleted successfully' });
+    if (parseInt(id) === req.user.id) {
+      return res.status(400).json({ error: 'Cannot delete your own account' });
+    }
+
+    await prisma.user.delete({ 
+      where: { id: parseInt(id) }
+    });
+    
+    return res.json({ message: 'User deleted successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Error deleting user' });
+    console.error('Error deleting user:', error);
+    return res.status(500).json({ 
+      error: 'Error deleting user',
+      details: process.env.NODE_ENV === 'development' ? error.message : null
+    });
   }
 };

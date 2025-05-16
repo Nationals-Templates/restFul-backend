@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const authRoutes = require('./routes/AuthRoutes');
 const userRoutes = require('./routes/userRoutes')
+const bookingRoutes =  require('./routes/BookingRoutes')
 const setupSwagger = require('./swagger');
 const morgan = require('morgan');
 const cors = require('cors');
@@ -15,7 +16,10 @@ app.use(cors(["*"]))
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/booking', bookingRoutes);
 setupSwagger(app);
+
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
