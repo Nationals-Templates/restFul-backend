@@ -18,7 +18,9 @@ router.put('/:id', userController.updateUser);
 // Delete user by ID
 router.delete('/:id', userController.deleteUser);
 
-// Verify OTP
-// router.post('/verify-otp', userController.verifyOtp);
+router.get('/me', userController.getCurrentUser);
+
+
+
 
 module.exports = router;

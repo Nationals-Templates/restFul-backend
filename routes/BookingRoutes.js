@@ -1,14 +1,25 @@
 const express = require('express');
-const { createBooking, getAllBookings, updateBookingStatus } = require('../controllers/BookingController');
+const {
+  createBooking,
+  getAllBookings,
+  updateBookingStatus,
+  getBookingsByPlateNumber
+} = require('../controllers/BookingController');
+const { verifyToken, verifyAdmin } = require('../middleware/auth'); // assuming you have these middlewares
 
 const router = express.Router();
 
--
+// Public route - anyone can create a booking
 router.post('/createBooking', createBooking);
 
-// (Optional) Get all bookings - you can protect this if needed
-router.get('/getAllBookings', getAllBookings);
+// Protected routes - require login
+router.use(verifyToken);
 
-router.patch('/:id/status', updateBookingStatus);
+// Admin-only routes
+router.get('/getAllBookings', verifyAdmin, getAllBookings);
+
+router.patch(':id/status', verifyAdmin, updateBookingStatus);
+
+router.get('/search', verifyAdmin, getBookingsByPlateNumber); 
 
 module.exports = router;

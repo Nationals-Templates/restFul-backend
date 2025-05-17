@@ -11,7 +11,18 @@ const safeUserFields = {
   role: false
 };
 
+// Helper to check authentication
+const ensureAuthenticated = (req, res) => {
+  if (!req.user) {
+    res.status(401).json({ error: 'Unauthorized: please log in' });
+    return false;
+  }
+  return true;
+};
+
 exports.getAllUsers = async (req, res) => {
+  if (!ensureAuthenticated(req, res)) return;
+
   try {
     const users = await prisma.user.findMany({
       where: {
@@ -31,6 +42,8 @@ exports.getAllUsers = async (req, res) => {
 };
 
 exports.getUserById = async (req, res) => {
+  if (!ensureAuthenticated(req, res)) return;
+
   const { id } = req.params;
   const requestingUserId = req.user.id;
   const requestingUserRole = req.user.role;
@@ -59,6 +72,8 @@ exports.getUserById = async (req, res) => {
 };
 
 exports.updateUser = async (req, res) => {
+  if (!ensureAuthenticated(req, res)) return;
+
   const { id } = req.params;
   const requestingUserId = req.user.id;
   const requestingUserRole = req.user.role;
@@ -90,7 +105,10 @@ exports.updateUser = async (req, res) => {
 };
 
 exports.deleteUser = async (req, res) => {
+  if (!ensureAuthenticated(req, res)) return;
+
   const { id } = req.params;
+
   try {
     if (parseInt(id) === req.user.id) {
       return res.status(400).json({ error: 'Cannot delete your own account' });
@@ -105,6 +123,26 @@ exports.deleteUser = async (req, res) => {
     console.error('Error deleting user:', error);
     return res.status(500).json({ 
       error: 'Error deleting user',
+      details: process.env.NODE_ENV === 'development' ? error.message : null
+    });
+  }
+};
+
+exports.getCurrentUser = async (req, res) => {
+  if (!ensureAuthenticated(req, res)) return;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: safeUserFields
+    });
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    return res.json(user);
+  } catch (error) {
+    console.error('Error fetching current user:', error);
+    return res.status(500).json({
+      error: 'Error fetching current user',
       details: process.env.NODE_ENV === 'development' ? error.message : null
     });
   }

@@ -143,9 +143,9 @@ exports.Prisma.BookingScalarFieldEnum = {
   phone: 'phone',
   plateNumber: 'plateNumber',
   bookingDate: 'bookingDate',
-  userId: 'userId',
   createdAt: 'createdAt',
-  status: 'status'
+  status: 'status',
+  userId: 'userId'
 };
 
 exports.Prisma.SortOrder = {

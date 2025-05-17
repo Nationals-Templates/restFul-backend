@@ -9,19 +9,22 @@ datasource db {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
   password     String
-  role         String   @default("user")
-  createdAt    DateTime @default(now())
+  role         String    @default("user")
+  createdAt    DateTime  @default(now())
   name         String?
-  parkingDate  DateTime @default(now())
+  parkingDate  DateTime  @default(now())
   parkingSlot  String?
   phone        String?
   plateNumber  String?
-  status       String   @default("pending")
+  status       String    @default("pending")
   otp          String?
   otpExpiresAt DateTime?
+  
+
+  bookings     Booking[] // ← One-to-many relationship
 }
 
 model Booking {
@@ -31,7 +34,9 @@ model Booking {
   phone       String
   plateNumber String
   bookingDate DateTime
-  userId      Int
   createdAt   DateTime @default(now())
   status      String   @default("pending")
+
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id]) // ← Foreign key relationship
 }
