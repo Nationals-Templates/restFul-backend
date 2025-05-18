@@ -3,21 +3,25 @@ const dotenv = require('dotenv');
 const authRoutes = require('./routes/AuthRoutes');
 const userRoutes = require('./routes/userRoutes')
 const bookingRoutes =  require('./routes/BookingRoutes')
-const setupSwagger = require('./swagger');
+const swaggerSpec = require('./swagger');
 const morgan = require('morgan');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express')
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 app.use(morgan("dev"))
-app.use(cors(["*"]))
+app.use(cors({
+    origin: 'http://localhost:5174',
+    credentials: true
+  }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/booking', bookingRoutes);
-setupSwagger(app);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 
 

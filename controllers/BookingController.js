@@ -1,6 +1,8 @@
 const { PrismaClient } = require('../generated/prisma');
 const prisma = new PrismaClient();
 
+
+
 // Helper to check authentication (added)
 const ensureAuthenticated = (req, res) => {
   if (!req.user) {
@@ -9,6 +11,8 @@ const ensureAuthenticated = (req, res) => {
   }
   return true;
 };
+
+
 
 // Create a booking (public - no auth) - no change here
 const createBooking = async (req, res) => {
@@ -36,6 +40,9 @@ const createBooking = async (req, res) => {
   }
 };
 
+
+
+
 // Get all bookings (protected, admin only)
 const getAllBookings = async (req, res) => {
   if (!ensureAuthenticated(req, res)) return; // Auth check added
@@ -54,6 +61,8 @@ const getAllBookings = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch bookings' });
   }
 };
+
+
 
 // Update booking status (admin only)
 const updateBookingStatus = async (req, res) => {
@@ -83,6 +92,7 @@ const updateBookingStatus = async (req, res) => {
   }
 };
 
+
 // New: Search bookings by plate number (admin only)
 const getBookingsByPlateNumber = async (req, res) => {
   if (!ensureAuthenticated(req, res)) return; // Auth check added
@@ -91,7 +101,7 @@ const getBookingsByPlateNumber = async (req, res) => {
     return res.status(403).json({ error: 'Forbidden: admins only' });
   }
 
-  const { plateNumber } = req.body;
+  const { plateNumber } = req.query;
 
   if (!plateNumber) {
     return res.status(400).json({ error: 'plateNumber query parameter is required' });

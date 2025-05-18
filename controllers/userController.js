@@ -11,6 +11,9 @@ const safeUserFields = {
   role: false
 };
 
+
+
+
 // Helper to check authentication
 const ensureAuthenticated = (req, res) => {
   if (!req.user) {
@@ -19,6 +22,9 @@ const ensureAuthenticated = (req, res) => {
   }
   return true;
 };
+
+
+
 
 exports.getAllUsers = async (req, res) => {
   if (!ensureAuthenticated(req, res)) return;
@@ -40,6 +46,8 @@ exports.getAllUsers = async (req, res) => {
     });
   }
 };
+
+
 
 exports.getUserById = async (req, res) => {
   if (!ensureAuthenticated(req, res)) return;
@@ -70,6 +78,8 @@ exports.getUserById = async (req, res) => {
     });
   }
 };
+
+
 
 exports.updateUser = async (req, res) => {
   if (!ensureAuthenticated(req, res)) return;
@@ -104,6 +114,8 @@ exports.updateUser = async (req, res) => {
   }
 };
 
+
+
 exports.deleteUser = async (req, res) => {
   if (!ensureAuthenticated(req, res)) return;
 
@@ -127,6 +139,7 @@ exports.deleteUser = async (req, res) => {
     });
   }
 };
+
 
 exports.getCurrentUser = async (req, res) => {
   if (!ensureAuthenticated(req, res)) return;

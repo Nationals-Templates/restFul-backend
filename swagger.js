@@ -1,28 +1,75 @@
-// swagger.js
-const swaggerJSDoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
-
+const swaggerJsdoc = require('swagger-jsdoc');
 const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Auth API with Prisma',
+      title: 'Vehicle Parking Management System API',
       version: '1.0.0',
-      description: 'User registration and login using Node.js, Express, Prisma, PostgreSQL',
+      description: 'API for managing vehicle parking slots',
     },
-    servers: [
-      {
-        url: 'http://localhost:5000',
+    servers: [{ url: 'http://localhost:5000' }],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
       },
-    ],
+      schemas: {
+        BookingInput: {
+          type: 'object',
+          required: ['plateNumber', 'slotId'],
+          properties: {
+            plateNumber: {
+              type: 'string',
+              example: 'ABC123'
+            },
+            slotId: {
+              type: 'string',
+              example: '507f1f77bcf86cd799439011'
+            }
+          }
+        },
+        Booking: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              example: '507f1f77bcf86cd799439011'
+            },
+            plateNumber: {
+              type: 'string',
+              example: 'ABC123'
+            },
+            slotId: {
+              type: 'string',
+              example: '507f1f77bcf86cd799439011'
+            },
+            status: {
+              type: 'string',
+              enum: ['active', 'completed', 'cancelled'],
+              example: 'active'
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              example: '2023-05-01T10:00:00Z'
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+              example: '2023-05-01T10:00:00Z'
+            }
+          }
+        }
+      }
+    },
+    security: [{
+      bearerAuth: []
+    }]
   },
-  apis: ['./routes/*.js'], // Path to API docs
+  apis: ['./routes/*.js'],
 };
-
-const swaggerSpec = swaggerJSDoc(options);
-
-function setupSwagger(app) {
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-}
-
-module.exports = setupSwagger;
+const swaggerSpec = swaggerJsdoc(options);
+module.exports = swaggerSpec;

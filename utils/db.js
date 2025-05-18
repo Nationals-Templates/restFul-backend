@@ -1,9 +1,7 @@
+// utils/db.js
 const { PrismaClient } = require('../generated/prisma/client');
 
-const globalPrisma = { prisma: null }
+// Create a single Prisma client instance
+const prisma = new PrismaClient();
 
-const prisma = globalPrisma.prisma || new PrismaClient()
-
-if (process.env.NODE_ENV !== "production") globalPrisma.prisma = prisma
-
-module.exports = prisma
+module.exports = prisma;

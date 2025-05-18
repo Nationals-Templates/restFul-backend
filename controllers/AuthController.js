@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const prisma = require('../utils/db');
 const sendOtpEmail = require('../utils/mailer');
 
+
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
 
 exports.register = async (req, res) => {
@@ -74,7 +75,16 @@ exports.login = async (req, res) => {
       { expiresIn: '1h' }
     );
 
-    res.json({ message: 'Login successful', token });
+    res.json({
+      message: 'Login successful',
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      }
+    });
 
   } catch (err) {
     console.error('Login error:', err);
@@ -121,3 +131,4 @@ exports.verifyOtp = async (req, res) => {
     res.status(500).json({ error: 'Verification failed', details: error.message });
   }
 };
+
