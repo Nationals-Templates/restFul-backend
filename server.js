@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const authRoutes = require('./routes/AuthRoutes');
 const userRoutes = require('./routes/userRoutes')
 const bookingRoutes =  require('./routes/BookingRoutes')
+const paymentRoutes = require('./routes/paymentRoutes')
 const swaggerSpec = require('./swagger');
 const morgan = require('morgan');
 const cors = require('cors');
@@ -22,6 +23,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/booking', bookingRoutes);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/payment', paymentRoutes)
 
 
 

@@ -142,10 +142,17 @@ exports.Prisma.BookingScalarFieldEnum = {
   email: 'email',
   phone: 'phone',
   plateNumber: 'plateNumber',
-  bookingDate: 'bookingDate',
+  entryTime: 'entryTime',
+  exitTime: 'exitTime',
   createdAt: 'createdAt',
   status: 'status',
   userId: 'userId'
+};
+
+exports.Prisma.PaymentScalarFieldEnum = {
+  id: 'id',
+  bookingId: 'bookingId',
+  amount: 'amount'
 };
 
 exports.Prisma.SortOrder = {
@@ -166,7 +173,8 @@ exports.Prisma.NullsOrder = {
 
 exports.Prisma.ModelName = {
   User: 'User',
-  Booking: 'Booking'
+  Booking: 'Booking',
+  Payment: 'Payment'
 };
 
 /**

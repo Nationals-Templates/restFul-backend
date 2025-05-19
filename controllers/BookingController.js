@@ -12,46 +12,80 @@ const ensureAuthenticated = (req, res) => {
   return true;
 };
 
-const deleteBooking = async(req,res)=>{
+const deleteBooking = async (req, res) => {
   const id = req.params.id;
   try {
     const booking = await prisma.booking.findUnique({
-      where: {id: parseInt(id)}
+      where: { id: parseInt(id) }
     })
-    if(!booking) return res.status(404).json({message: "Booking not found!"})
+    if (!booking) return res.status(404).json({ message: "Booking not found!" })
     await prisma.booking.delete({
-      where: {id: parseInt(id)}
+      where: { id: parseInt(id) }
     })
-    return res.status(200).json({message: "Booking deleted successfully"})
+    return res.status(200).json({ message: "Booking deleted successfully" })
   } catch (error) {
-    return res.status(500).json({message: "Internal server error"})
+    return res.status(500).json({ message: "Internal server error" })
   }
 }
+
 // Create a booking (public - no auth) - no change here
 const createBooking = async (req, res) => {
-  const { fullName, email, phone, plateNumber, bookingDate, userId } = req.body;
-  if (!fullName || !email || !phone || !plateNumber || !bookingDate) {
+  const { fullName, email, phone, plateNumber, entryTime, exitTime, userId } = req.body;
+
+  if (!fullName || !email || !phone || !plateNumber || !entryTime || !exitTime) {
     return res.status(400).json({ error: 'Missing fields' });
   }
 
   try {
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
+
+    // Convert entry and exit times to Date objects
+    const entryDateTime = new Date(`${today}T${entryTime}:00Z`);
+    const exitDateTime = new Date(`${today}T${exitTime}:00Z`);
+
+    if (isNaN(entryDateTime) || isNaN(exitDateTime)) {
+      return res.status(400).json({ error: 'Invalid time format' });
+    }
+
+    // Calculate duration in hours
+    const durationInMs = exitDateTime - entryDateTime;
+
+    if (durationInMs <= 0) {
+      return res.status(400).json({ error: 'Exit time must be after entry time' });
+    }
+
+    const durationInHours = Math.ceil(durationInMs / (1000 * 60 * 60)); // Round up to nearest hour
+    const amount = durationInHours * 500;
+
+    // Create booking
     const booking = await prisma.booking.create({
       data: {
         fullName,
         email,
         phone,
         plateNumber,
-        bookingDate: new Date(bookingDate),
+        entryTime: entryDateTime,
+        exitTime: exitDateTime,
         userId: userId
       }
     });
 
-    res.status(201).json(booking);
+    // Create payment
+    await prisma.payment.create({
+      data: {
+        bookingId: booking.id,
+        amount: amount
+      }
+    });
+
+    res.status(201).json({ booking, amount });
   } catch (error) {
     console.error('Create booking error:', error);
-    res.status(500).json({ error: 'Failed to create booking' });
+    res.status(500).json({ error: error.message });
   }
 };
+
 
 
 

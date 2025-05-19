@@ -1,4 +1,5 @@
 const swaggerJsdoc = require('swagger-jsdoc');
+
 const options = {
   definition: {
     openapi: '3.0.0',
@@ -69,7 +70,11 @@ const options = {
       bearerAuth: []
     }]
   },
-  apis: ['./routes/*.js'],
+
+  // ✅ Make sure it includes all relevant folders (routes + controllers if Swagger comments are there)
+  apis: ['./routes/*.js', './controllers/*.js'],
 };
+
 const swaggerSpec = swaggerJsdoc(options);
+
 module.exports = swaggerSpec;

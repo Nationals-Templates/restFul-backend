@@ -22,8 +22,6 @@ model User {
   status       String    @default("pending")
   otp          String?
   otpExpiresAt DateTime?
-  
-
   bookings     Booking[] // ← One-to-many relationship
 }
 
@@ -33,10 +31,19 @@ model Booking {
   email       String
   phone       String
   plateNumber String
-  bookingDate DateTime
+  entryTime   DateTime
+  exitTime    DateTime
   createdAt   DateTime @default(now())
   status      String   @default("pending")
   userId      Int
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade) // ← Foreign key relationship
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  payment Payment? @relation("BookingPayment")
 }
 
+model Payment {
+  id        Int     @id @default(autoincrement())
+  bookingId Int     @unique
+  amount    Int
+  booking   Booking @relation("BookingPayment", fields: [bookingId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
