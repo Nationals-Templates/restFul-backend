@@ -1,12 +1,12 @@
 // prisma/seed.js
 const { PrismaClient } = require('../generated/prisma');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminEmail = 'admin@example.com';
-  const adminPassword = await bcrypt.hash('admin123', 10);
+  const adminEmail = 'deborahrutagengwa@gmail.com';
+  const adminPassword = await bcrypt.hash('debra123', 10);
   
   await prisma.user.upsert({
     where: { email: adminEmail },

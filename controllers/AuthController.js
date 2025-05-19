@@ -7,9 +7,9 @@ const sendOtpEmail = require('../utils/mailer');
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
 
 exports.register = async (req, res) => {
-  const { email, password, name, phone } = req.body;
+  const { email, password, name, phone, role } = req.body;
 
-  if (!email || !password || !name || !phone) {
+  if (!email || !password || !name || !phone || !role) {
     return res.status(400).json({ error: 'Some missing fields' });
   }
 
@@ -31,6 +31,7 @@ exports.register = async (req, res) => {
         password: hashedPassword,
         name,
         phone,
+        role,
         status: 'pending',
         otp,
         otpExpiresAt,

@@ -32,6 +32,7 @@ const { register, login, verifyOtp } = authController;
  *               name:
  *                 type: string
  *                 example: John Doe
+ *               
  *     responses:
  *       201:
  *         description: User registered successfully

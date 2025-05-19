@@ -3659,7 +3659,7 @@ export namespace Prisma {
   export type UserCreateInput = {
     email: string
     password: string
-    role?: string
+    role: string
     createdAt?: Date | string
     name?: string | null
     parkingDate?: Date | string
@@ -3676,7 +3676,7 @@ export namespace Prisma {
     id?: number
     email: string
     password: string
-    role?: string
+    role: string
     createdAt?: Date | string
     name?: string | null
     parkingDate?: Date | string
@@ -3726,7 +3726,7 @@ export namespace Prisma {
     id?: number
     email: string
     password: string
-    role?: string
+    role: string
     createdAt?: Date | string
     name?: string | null
     parkingDate?: Date | string
@@ -4420,7 +4420,7 @@ export namespace Prisma {
   export type UserCreateWithoutBookingsInput = {
     email: string
     password: string
-    role?: string
+    role: string
     createdAt?: Date | string
     name?: string | null
     parkingDate?: Date | string
@@ -4436,7 +4436,7 @@ export namespace Prisma {
     id?: number
     email: string
     password: string
-    role?: string
+    role: string
     createdAt?: Date | string
     name?: string | null
     parkingDate?: Date | string

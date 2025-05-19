@@ -12,8 +12,21 @@ const ensureAuthenticated = (req, res) => {
   return true;
 };
 
-
-
+const deleteBooking = async(req,res)=>{
+  const id = req.params.id;
+  try {
+    const booking = await prisma.booking.findUnique({
+      where: {id: parseInt(id)}
+    })
+    if(!booking) return res.status(404).json({message: "Booking not found!"})
+    await prisma.booking.delete({
+      where: {id: parseInt(id)}
+    })
+    return res.status(200).json({message: "Booking deleted successfully"})
+  } catch (error) {
+    return res.status(500).json({message: "Internal server error"})
+  }
+}
 // Create a booking (public - no auth) - no change here
 const createBooking = async (req, res) => {
   const { fullName, email, phone, plateNumber, bookingDate, userId } = req.body;
@@ -129,5 +142,6 @@ module.exports = {
   createBooking,
   getAllBookings,
   updateBookingStatus,
-  getBookingsByPlateNumber // exported new search function
+  getBookingsByPlateNumber, // exported new search function
+  deleteBooking
 };

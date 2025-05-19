@@ -3,7 +3,7 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Vehicle Parking Management System API',
+      title: 'Parking Management System API',
       version: '1.0.0',
       description: 'API for managing vehicle parking slots',
     },

@@ -3,7 +3,8 @@ const {
   createBooking,
   getAllBookings,
   updateBookingStatus,
-  getBookingsByPlateNumber
+  getBookingsByPlateNumber,
+  deleteBooking
 } = require('../controllers/BookingController');
 const { verifyToken, verifyAdmin } = require('../middleware/auth');
 
@@ -149,5 +150,60 @@ router.patch('/status/:id', verifyAdmin, updateBookingStatus);
  *         description: Server error
  */
 router.get('/search', verifyAdmin, getBookingsByPlateNumber);
+
+/**
+ * @swagger
+ * /api/booking/delete/{id}:
+ *   delete:
+ *     summary: Delete a booking by ID (Admin only)
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID of the booking to delete
+ *     responses:
+ *       200:
+ *         description: Booking deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Booking deleted successfully
+ *       404:
+ *         description: Booking not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Booking not found!
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (not admin)
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+
+
+router.delete("/delete/:id", verifyAdmin, deleteBooking)
 
 module.exports = router;
