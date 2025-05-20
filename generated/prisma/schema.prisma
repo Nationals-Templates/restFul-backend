@@ -22,22 +22,25 @@ model User {
   status       String    @default("pending")
   otp          String?
   otpExpiresAt DateTime?
-  bookings     Booking[] // ← One-to-many relationship
+  bookings     Booking[] // One-to-many relationship with Booking
 }
 
 model Booking {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   fullName    String
   email       String
   phone       String
   plateNumber String
   entryTime   DateTime
-  exitTime    DateTime
-  createdAt   DateTime @default(now())
-  status      String   @default("pending")
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  exitTime    DateTime?
+  createdAt   DateTime  @default(now())
+  status      String    @default("pending")
 
+  userId    Int
+  parkingId Int?
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  parking Parking? @relation("ParkingToBooking", fields: [parkingId], references: [id])
   payment Payment? @relation("BookingPayment")
 }
 
@@ -46,4 +49,16 @@ model Payment {
   bookingId Int     @unique
   amount    Int
   booking   Booking @relation("BookingPayment", fields: [bookingId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Parking {
+  id             Int      @id @default(autoincrement())
+  parkingCode    String   @unique
+  parkingName    String
+  availableSlots Int
+  location       String
+  feePerHour     Int
+  createdAt      DateTime @default(now())
+
+  bookings Booking[] @relation("ParkingToBooking") // Match the relation name in Booking
 }

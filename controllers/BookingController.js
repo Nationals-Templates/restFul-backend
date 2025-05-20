@@ -1,181 +1,155 @@
 const { PrismaClient } = require('../generated/prisma');
 const prisma = new PrismaClient();
 
+const { differenceInHours } = require('date-fns');
 
-
-// Helper to check authentication (added)
-const ensureAuthenticated = (req, res) => {
-  if (!req.user) {
-    res.status(401).json({ error: 'Unauthorized: please log in' });
-    return false;
-  }
-  return true;
-};
-
-const deleteBooking = async (req, res) => {
-  const id = req.params.id;
+// User books a parking slot
+exports.createBooking = async (req, res) => {
   try {
-    const booking = await prisma.booking.findUnique({
-      where: { id: parseInt(id) }
-    })
-    if (!booking) return res.status(404).json({ message: "Booking not found!" })
-    await prisma.booking.delete({
-      where: { id: parseInt(id) }
-    })
-    return res.status(200).json({ message: "Booking deleted successfully" })
-  } catch (error) {
-    return res.status(500).json({ message: "Internal server error" })
-  }
-}
+    const { fullName, email, phone, plateNumber, parkingId, exitTime } = req.body;
 
-// Create a booking (public - no auth) - no change here
-const createBooking = async (req, res) => {
-  const { fullName, email, phone, plateNumber, entryTime, exitTime, userId } = req.body;
-
-  if (!fullName || !email || !phone || !plateNumber || !entryTime || !exitTime) {
-    return res.status(400).json({ error: 'Missing fields' });
-  }
-
-  try {
-    // Get today's date in YYYY-MM-DD format
-    const today = new Date().toISOString().split('T')[0];
-
-    // Convert entry and exit times to Date objects
-    const entryDateTime = new Date(`${today}T${entryTime}:00Z`);
-    const exitDateTime = new Date(`${today}T${exitTime}:00Z`);
-
-    if (isNaN(entryDateTime) || isNaN(exitDateTime)) {
-      return res.status(400).json({ error: 'Invalid time format' });
-    }
-
-    // Calculate duration in hours
-    const durationInMs = exitDateTime - entryDateTime;
-
-    if (durationInMs <= 0) {
-      return res.status(400).json({ error: 'Exit time must be after entry time' });
-    }
-
-    const durationInHours = Math.ceil(durationInMs / (1000 * 60 * 60)); // Round up to nearest hour
-    const amount = durationInHours * 500;
-
-    // Create booking
     const booking = await prisma.booking.create({
       data: {
         fullName,
         email,
         phone,
         plateNumber,
-        entryTime: entryDateTime,
-        exitTime: exitDateTime,
-        userId: userId
+        entryTime: new Date(),
+        userId: req.user.id,
+        parkingId: parkingId ? Number(parkingId) : null, 
+        exitTime: null
       }
     });
 
-    // Create payment
-    await prisma.payment.create({
+    res.status(201).json(booking);
+  } catch (err) {
+    console.error('Error creating booking:', err);
+    res.status(500).json({ error: 'Server error creating booking.' });
+  }
+};
+
+// Admin sets exit time and calculates fee
+exports.exitBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: parseInt(bookingId) },
+      include: { parking: true }
+    });
+
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+
+    if (booking.exitTime) return res.status(400).json({ error: 'Car has already exited' });
+
+    const exitTime = new Date();
+    const durationInHours = Math.max(1, differenceInHours(exitTime, booking.entryTime));
+    const amount = durationInHours * booking.parking.feePerHour;
+
+    const updatedBooking = await prisma.booking.update({
+      where: { id: booking.id },
       data: {
-        bookingId: booking.id,
-        amount: amount
-      }
-    });
-
-    res.status(201).json({ booking, amount });
-  } catch (error) {
-    console.error('Create booking error:', error);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-
-
-
-
-// Get all bookings (protected, admin only)
-const getAllBookings = async (req, res) => {
-  if (!ensureAuthenticated(req, res)) return; // Auth check added
-
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Forbidden: admins only' });
-  }
-
-  try {
-    const bookings = await prisma.booking.findMany({
-      orderBy: { createdAt: 'desc' }
-    });
-    res.json(bookings);
-  } catch (error) {
-    console.error('Fetch bookings error:', error);
-    res.status(500).json({ error: 'Failed to fetch bookings' });
-  }
-};
-
-
-
-// Update booking status (admin only)
-const updateBookingStatus = async (req, res) => {
-  if (!ensureAuthenticated(req, res)) return; // Auth check added
-
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Forbidden: admins only' });
-  }
-
-  const { id } = req.params;
-  const { status } = req.body;
-
-  if (!['accepted', 'rejected'].includes(status)) {
-    return res.status(400).json({ error: 'Status must be accepted or rejected' });
-  }
-
-  try {
-    const updated = await prisma.booking.update({
-      where: { id: parseInt(id) },
-      data: { status }
-    });
-
-    res.json(updated);
-  } catch (error) {
-    console.error('Update status error:', error);
-    res.status(500).json({ error: 'Failed to update booking status' });
-  }
-};
-
-
-// New: Search bookings by plate number (admin only)
-const getBookingsByPlateNumber = async (req, res) => {
-  if (!ensureAuthenticated(req, res)) return; // Auth check added
-
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Forbidden: admins only' });
-  }
-
-  const { plateNumber } = req.query;
-
-  if (!plateNumber) {
-    return res.status(400).json({ error: 'plateNumber query parameter is required' });
-  }
-
-  try {
-    const bookings = await prisma.booking.findMany({
-      where: {
-        plateNumber: {
-          contains: plateNumber,
-          mode: 'insensitive'
+        exitTime,
+        status: 'completed',
+        payment: {
+          create: { amount }
         }
       },
-      orderBy: { createdAt: 'desc' }
+      include: { payment: true }
     });
 
-    res.json(bookings);
-  } catch (error) {
-    console.error('Search bookings error:', error);
-    res.status(500).json({ error: 'Failed to search bookings' });
+    res.json({
+      message: 'Car exited successfully.',
+      durationInHours,
+      totalAmount: amount,
+      booking: updatedBooking
+    });
+  } catch (err) {
+    console.error('Error during exit:', err);
+    res.status(500).json({ error: 'Server error during exit.' });
   }
 };
 
-module.exports = {
-  createBooking,
-  getAllBookings,
-  updateBookingStatus,
-  getBookingsByPlateNumber, // exported new search function
-  deleteBooking
+// Get bookings between two dates
+exports.getBookingsBetweenDates = async (req, res) => {
+  try {
+    const { from, to } = req.query;
+
+    const fromDate = new Date(from);
+    const toDate = new Date(to);
+
+    const bookings = await prisma.booking.findMany({
+      where: {
+        entryTime: {
+          gte: fromDate,
+          lte: toDate
+        }
+      },
+      include: {
+        user: true,
+        parking: true,
+        payment: true
+      }
+    });
+
+    res.json(bookings);
+  } catch (err) {
+    console.error('Error fetching bookings by date:', err);
+    res.status(500).json({ error: 'Server error fetching bookings.' });
+  }
 };
+
+// Get completed bookings (exits) + total amount within a date range
+exports.getCompletedBookingsSummary = async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    const fromDate = new Date(from);
+    const toDate = new Date(to);
+
+    const bookings = await prisma.booking.findMany({
+      where: {
+        status: 'completed',
+        exitTime: {
+          gte: fromDate,
+          lte: toDate
+        }
+      },
+      include: { payment: true }
+    });
+
+    const totalAmount = bookings.reduce((sum, b) => sum + (b.payment?.amount || 0), 0);
+
+    res.json({ totalAmount, bookings });
+  } catch (err) {
+    console.error('Error summarizing bookings:', err);
+    res.status(500).json({ error: 'Server error summarizing exits.' });
+  }
+};
+
+// Get all bookings (added implementation)
+exports.getAllBookings = async (req, res) => {
+  try {
+    const bookings = await prisma.booking.findMany({
+      include: {
+        user: true,
+        parking: true,
+        payment: true
+      },
+      orderBy: {
+        entryTime: 'desc'
+      }
+    });
+    res.json(bookings);
+  } catch (err) {
+    console.error('Error fetching all bookings:', err);
+    res.status(500).json({ error: 'Server error fetching bookings.' });
+  }
+};
+
+// module.exports = {
+//   createBooking,
+//   exitBooking,
+//   getBookingsBetweenDates,
+//   getCompletedBookingsSummary,
+//   getAllBookings
+// };

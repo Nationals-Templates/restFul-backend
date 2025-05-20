@@ -160,3 +160,10 @@ exports.getCurrentUser = async (req, res) => {
     });
   }
 };
+// module.exports = {
+//   getAllUsers,
+//   getUserById,
+//   updateUser,
+//   deleteUser,
+//   getCurrentUser
+// };

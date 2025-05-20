@@ -1,72 +1,105 @@
 const express = require('express');
-const router = express.Router();
-const userController = require('../controllers/userController');
-const { verifyToken, verifyAdmin } = require('../middleware/auth'); 
+const {
+  getAllUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
+  getCurrentUser
+} = require('../controllers/userController');
+const { verifyToken, verifyAdmin } = require('../middleware/auth');
 
-// Apply verifyToken middleware to all routes in this router
-router.use(verifyToken);
+const router = express.Router();
+
+console.log('verifyToken:', typeof verifyToken);       // should be 'function'
+console.log('verifyAdmin:', typeof verifyAdmin);       // should be 'function'
+console.log('getAllUsers:', typeof getAllUsers);       // should be 'function'
+console.log('getUserById:', typeof getUserById);       // should be 'function'
+console.log('updateUser:', typeof updateUser);         // should be 'function'
+console.log('deleteUser:', typeof deleteUser);         // should be 'function'
+console.log('getCurrentUser:', typeof getCurrentUser); // should be 'function'
 
 /**
  * @swagger
  * tags:
  *   name: Users
- *   description: User management endpoints
+ *   description: User management and profiles
  */
 
 /**
  * @swagger
- * /api/user:
+ * /api/users:
  *   get:
- *     summary: Get all non-admin users (Admin only)
+ *     summary: Get all users except admins (admin only)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of users
+ *         description: List of users (excluding admins)
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/User'
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                     example: 507f1f77bcf86cd799439011
+ *                   username:
+ *                     type: string
+ *                     example: johndoe
+ *                   email:
+ *                     type: string
+ *                     example: johndoe@example.com
+ *                   role:
+ *                     type: string
+ *                     example: user
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden (not admin)
- *       500:
- *         description: Server error
+ *         description: Forbidden (admin only)
  */
-router.get('/', verifyAdmin, userController.getAllUsers);
+router.get('/', verifyToken, verifyAdmin, getAllUsers);
 
 /**
  * @swagger
- * /api/user/me:
+ * /api/users/me:
  *   get:
- *     summary: Get current authenticated user
+ *     summary: Get currently logged-in user profile
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Current user data
+ *         description: Current user profile data
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/User'
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: 507f1f77bcf86cd799439011
+ *                 username:
+ *                   type: string
+ *                   example: johndoe
+ *                 email:
+ *                   type: string
+ *                   example: johndoe@example.com
+ *                 role:
+ *                   type: string
+ *                   example: user
  *       401:
  *         description: Unauthorized
- *       500:
- *         description: Server error
  */
-router.get('/me', userController.getCurrentUser);
+router.get('/me', verifyToken, getCurrentUser);
 
 /**
  * @swagger
- * /api/user/{id}:
+ * /api/users/{id}:
  *   get:
- *     summary: Get user by ID
- *     description: Users can access their own data, admins can access any user
+ *     summary: Get user by ID (admin or self)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -74,33 +107,43 @@ router.get('/me', userController.getCurrentUser);
  *       - in: path
  *         name: id
  *         required: true
+ *         description: User ID
  *         schema:
  *           type: string
- *         description: User ID
  *     responses:
  *       200:
- *         description: User data
+ *         description: User profile data
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/User'
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: 507f1f77bcf86cd799439011
+ *                 username:
+ *                   type: string
+ *                   example: johndoe
+ *                 email:
+ *                   type: string
+ *                   example: johndoe@example.com
+ *                 role:
+ *                   type: string
+ *                   example: user
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden (accessing another user's data without admin role)
+ *         description: Forbidden (not admin or self)
  *       404:
  *         description: User not found
- *       500:
- *         description: Server error
  */
-router.get('/:id', userController.getUserById);
+router.get('/:id', verifyToken, getUserById);
 
 /**
  * @swagger
- * /api/user/{id}:
+ * /api/users/{id}:
  *   put:
- *     summary: Update user by ID
- *     description: Users can update their own data, admins can update any user
+ *     summary: Update user by ID (admin or self)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -108,38 +151,59 @@ router.get('/:id', userController.getUserById);
  *       - in: path
  *         name: id
  *         required: true
+ *         description: User ID
  *         schema:
  *           type: string
- *         description: User ID
  *     requestBody:
+ *       description: User fields to update
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/UserUpdate'
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 example: johndoe_updated
+ *               email:
+ *                 type: string
+ *                 example: john.updated@example.com
  *     responses:
  *       200:
- *         description: Updated user data
+ *         description: Updated user profile
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/User'
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: 507f1f77bcf86cd799439011
+ *                 username:
+ *                   type: string
+ *                   example: johndoe_updated
+ *                 email:
+ *                   type: string
+ *                   example: john.updated@example.com
+ *                 role:
+ *                   type: string
+ *                   example: user
  *       400:
  *         description: Invalid input
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden (updating another user's data without admin role)
- *       500:
- *         description: Server error
+ *         description: Forbidden (not admin or self)
+ *       404:
+ *         description: User not found
  */
-router.put('/:id', userController.updateUser);
+router.put('/:id', verifyToken, updateUser);
 
 /**
  * @swagger
- * /api/user/{id}:
+ * /api/users/{id}:
  *   delete:
- *     summary: Delete user by ID (Admin only)
+ *     summary: Delete user by ID (admin only, cannot delete self)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -147,21 +211,19 @@ router.put('/:id', userController.updateUser);
  *       - in: path
  *         name: id
  *         required: true
+ *         description: User ID to delete
  *         schema:
  *           type: string
- *         description: User ID
  *     responses:
  *       200:
  *         description: User deleted successfully
- *       400:
- *         description: Cannot delete your own account
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden (not admin)
- *       500:
- *         description: Server error
+ *         description: Forbidden (admin only or trying to delete self)
+ *       404:
+ *         description: User not found
  */
-router.delete('/:id', userController.deleteUser);
+router.delete('/:id', verifyToken, verifyAdmin, deleteUser);
 
 module.exports = router;

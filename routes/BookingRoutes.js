@@ -1,14 +1,15 @@
 const express = require('express');
+const router = express.Router();
+
 const {
   createBooking,
+  exitBooking,
   getAllBookings,
-  updateBookingStatus,
-  getBookingsByPlateNumber,
-  deleteBooking
+  getBookingsBetweenDates,
+  getCompletedBookingsSummary
 } = require('../controllers/BookingController');
-const { verifyToken, verifyAdmin } = require('../middleware/auth');
 
-const router = express.Router();
+const { verifyToken, verifyAdmin } = require('../middleware/auth');
 
 /**
  * @swagger
@@ -19,12 +20,15 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/booking/createBooking:
+ * /api/booking/create:
  *   post:
  *     summary: Create a new booking
  *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
+ *       description: Booking details
  *       content:
  *         application/json:
  *           schema:
@@ -37,26 +41,23 @@ const router = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Booking'
  *       400:
- *         description: Invalid input
- *       500:
- *         description: Server error
+ *         description: Invalid input data
+ *       401:
+ *         description: Unauthorized access
  */
-router.post('/createBooking', createBooking);
-
-// Protected routes - require login
-router.use(verifyToken);
+router.post('/create', verifyToken, createBooking);
 
 /**
  * @swagger
- * /api/booking/getAllBookings:
+ * /api/booking/all:
  *   get:
- *     summary: Get all bookings (Admin only)
+ *     summary: Retrieve all bookings (admin only)
  *     tags: [Bookings]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of all bookings
+ *         description: Array of bookings
  *         content:
  *           application/json:
  *             schema:
@@ -64,146 +65,129 @@ router.use(verifyToken);
  *               items:
  *                 $ref: '#/components/schemas/Booking'
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized access
  *       403:
- *         description: Forbidden (not admin)
- *       500:
- *         description: Server error
+ *         description: Forbidden (admin only)
  */
-router.get('/getAllBookings', verifyAdmin, getAllBookings);
+router.get('/all', verifyToken, verifyAdmin, getAllBookings);
 
 /**
  * @swagger
- * /api/booking/status/{id}:
+ * /api/booking/{bookingId}/exit:
  *   patch:
- *     summary: Update booking status (Admin only)
+ *     summary: Mark booking as exited and calculate payment (admin only)
  *     tags: [Bookings]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: bookingId
+ *         required: true
  *         schema:
  *           type: string
- *         required: true
- *         description: Booking ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               status:
- *                 type: string
- *                 enum: [active, completed, cancelled]
- *                 description: New status of the booking
+ *         description: ID of the booking
  *     responses:
  *       200:
- *         description: Booking status updated
+ *         description: Booking exited with payment calculated
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Booking'
  *       400:
- *         description: Invalid input
+ *         description: Invalid booking ID or booking already exited
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized access
  *       403:
- *         description: Forbidden (not admin)
- *       404:
- *         description: Booking not found
- *       500:
- *         description: Server error
+ *         description: Forbidden (admin only)
  */
-router.patch('/status/:id', verifyAdmin, updateBookingStatus);
+router.patch('/:bookingId/exit', verifyToken, verifyAdmin, exitBooking);
 
 /**
  * @swagger
- * /api/booking/search:
+ * /api/booking/range:
  *   get:
- *     summary: Search bookings by plate number (Admin only)
+ *     summary: Get bookings between two dates (admin only)
  *     tags: [Bookings]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: plateNumber
+ *         name: from
+ *         required: true
  *         schema:
  *           type: string
+ *           format: date
+ *         description: Start date (YYYY-MM-DD)
+ *       - in: query
+ *         name: to
  *         required: true
- *         description: Vehicle plate number to search for
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date (YYYY-MM-DD)
  *     responses:
  *       200:
- *         description: List of matching bookings
+ *         description: List of bookings within date range
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Booking'
+ *       400:
+ *         description: Missing or invalid date parameters
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized access
  *       403:
- *         description: Forbidden (not admin)
- *       500:
- *         description: Server error
+ *         description: Forbidden (admin only)
  */
-router.get('/search', verifyAdmin, getBookingsByPlateNumber);
+router.get('/range', verifyToken, verifyAdmin, getBookingsBetweenDates);
 
 /**
  * @swagger
- * /api/booking/delete/{id}:
- *   delete:
- *     summary: Delete a booking by ID (Admin only)
+ * /api/booking/completed-summary:
+ *   get:
+ *     summary: Get completed bookings summary and total payments (admin only)
  *     tags: [Bookings]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: integer
+ *       - in: query
+ *         name: from
  *         required: true
- *         description: ID of the booking to delete
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date (YYYY-MM-DD)
+ *       - in: query
+ *         name: to
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date (YYYY-MM-DD)
  *     responses:
  *       200:
- *         description: Booking deleted successfully
+ *         description: Summary with total completed bookings and payments
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 message:
- *                   type: string
- *                   example: Booking deleted successfully
- *       404:
- *         description: Booking not found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Booking not found!
+ *                 totalBookings:
+ *                   type: integer
+ *                   example: 10
+ *                 totalPayment:
+ *                   type: number
+ *                   format: float
+ *                   example: 500.0
+ *       400:
+ *         description: Invalid or missing date parameters
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized access
  *       403:
- *         description: Forbidden (not admin)
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Internal server error
+ *         description: Forbidden (admin only)
  */
-
-
-router.delete("/delete/:id", verifyAdmin, deleteBooking)
+router.get('/completed-summary', verifyToken, verifyAdmin, getCompletedBookingsSummary);
 
 module.exports = router;

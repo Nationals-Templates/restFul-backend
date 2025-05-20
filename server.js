@@ -4,6 +4,7 @@ const authRoutes = require('./routes/AuthRoutes');
 const userRoutes = require('./routes/userRoutes')
 const bookingRoutes =  require('./routes/BookingRoutes')
 const paymentRoutes = require('./routes/paymentRoutes')
+const parkingRoutes = require('./routes/parkingRoutes')
 const swaggerSpec = require('./swagger');
 const morgan = require('morgan');
 const cors = require('cors');
@@ -20,10 +21,11 @@ app.use(cors({
   }));
 
 app.use('/api/auth', authRoutes);
-app.use('/api/user', userRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/booking', bookingRoutes);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.use('/payment', paymentRoutes)
+app.use('/api/payment', paymentRoutes)
+app.use('/api/parking', parkingRoutes)
 
 
 

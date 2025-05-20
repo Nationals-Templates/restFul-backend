@@ -146,13 +146,24 @@ exports.Prisma.BookingScalarFieldEnum = {
   exitTime: 'exitTime',
   createdAt: 'createdAt',
   status: 'status',
-  userId: 'userId'
+  userId: 'userId',
+  parkingId: 'parkingId'
 };
 
 exports.Prisma.PaymentScalarFieldEnum = {
   id: 'id',
   bookingId: 'bookingId',
   amount: 'amount'
+};
+
+exports.Prisma.ParkingScalarFieldEnum = {
+  id: 'id',
+  parkingCode: 'parkingCode',
+  parkingName: 'parkingName',
+  availableSlots: 'availableSlots',
+  location: 'location',
+  feePerHour: 'feePerHour',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -174,7 +185,8 @@ exports.Prisma.NullsOrder = {
 exports.Prisma.ModelName = {
   User: 'User',
   Booking: 'Booking',
-  Payment: 'Payment'
+  Payment: 'Payment',
+  Parking: 'Parking'
 };
 
 /**

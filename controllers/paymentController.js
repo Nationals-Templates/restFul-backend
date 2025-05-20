@@ -30,5 +30,5 @@ const getPayment = async (req, res) => {
 };
 
 module.exports = {
-  getPayment,
+  getPayment
 };
